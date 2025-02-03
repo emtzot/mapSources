@@ -479,24 +479,6 @@
         }
     });
 
-    //pop-up formula!! from gpt
-    map.on('click', (e) => {
-        const [ selectedTract ] = map.queryRenderedFeatures(e.point,  {
-            layers: ["ohioTracts-medIncome"]
-        })
-        if (selectedTract)  {
-    //if (features.length > 0) {
-        //const feature = features[0]; // Choose the first feature in the array (e.g., for a point)
-
-        // Create a new popup
-        new mapboxgl.Popup({ closeButton: true }) //set css/html to add to map (needs a box in html? and then I can say goodbye to alerts??)
-            .setLngLat(selectedTract.geometry.coordinates) // Position popup at geometry coordinates
-            .setHTML(`<h3>${selectedTract.properties.NAMELSAD}</h3><p>${selectedTract.properties.medIncome}</p>`)
-            .addTo(map);
-        }});
-
-
-
     map.on("click", (e)=> {
         const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
             layers: ["ohioTracts-layer"]

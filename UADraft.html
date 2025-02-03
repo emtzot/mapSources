@@ -1,0 +1,783 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Upper Arlington Draft</title>
+        <meta name="viewport" content="width=device-width, intial-scale=1" />
+
+<link
+  href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
+  rel="stylesheet"
+/>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script> <!--mapbox GL JS api-->
+    <script src="https://unpkg.com/@turf/turf@^7/turf.min.js"></script> <!--turf.js library-->
+    <!--<script src="https://api.census.gov/data/2023/acs/acs5?get=NAME,B19013_001E&for=tract:*&in=state:39&in=county:049&key=3778d297bf15227cbba0fbbaa02fccd9c09eb2c2"></script> --> <!--ACS 5 year-->
+    <!--<script src="https://api.census.gov/data/2020/dec/pl?get=NAME,geometry&for=tract:*&in=state:39+county:049&key=3778d297bf15227cbba0fbbaa02fccd9c09eb2c2"></script> --> <!--mapserver/geometry API goes here, prayers that it works!!-->
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        #map {
+            width: 100%;
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        .popup {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            font-family: Arial, Helvetica, sans-serif;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        /* Title styling */
+        .popup h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #425A70
+        }
+
+        /* Paragraph styling */
+        .popup p {
+            font-size: 14px;
+            color: #425A70;
+        }
+
+
+        #container  {
+           display: flex;
+           height: 100%;
+           width: 100%
+        }
+
+        #sidebar    {
+            width: 300px;
+            flex-shrink: 1;  
+            height: 100%; 
+            padding: 30px;
+            background-color: #f2f0ef;
+            transition: width 0.3s ease;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /*media queries for smaller screen/window sizes*/
+        @media (max-width: 768px)   {
+            #sidebar    {
+                width: 175px;
+            } 
+        }
+
+        @media (max-width: 480px)   {
+            #sidebar    {
+                width: 100px;
+            }  
+        }
+
+        @media (max-width: 320px)   {
+            #sidebar    {
+                width: 50px;
+            }   
+        }
+
+        button  {
+            display: block;
+            padding: 4px;
+            margin-bottom: 15px; 
+            font: 'Helvetica Neue';
+            font-size: 14px;
+        }
+
+        .legend {
+            background-color: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            font: 14px/24px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            padding: 10px;
+            position: absolute;
+            left: 25px;
+            width: 200px;
+            flex-shrink: 1;
+            text-wrap: balance;
+            top: 260px;
+            z-index: 1;
+            line-height: 18px;
+        }
+ 
+        .legend h4 {
+            margin: 0 0 10px;
+            font: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        }
+ 
+        .legend div span {
+            display: inline-block;
+            height: 20px;
+            margin-right: 5px;
+            width: 20px;
+            background-color: white;
+     }
+
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="sidebar">
+            <button id="medIncomeButton">Median Annual Income</button> 
+            <button id="pctCBRentersButton">Percent of Renters, Cost Burdened</button> 
+            <button id="pctCBOwnersButton">Percent of Homeowners, Cost Burdened</button> 
+            <button id="pctHHButton">Percent Change in Households (2010-2023)</button> 
+            <div id="medIncomeLegend" class="legend">
+                    <h4>Median Annual Household Income (2023, USD)</h4>
+                    <div><span style="background-color: #980043"></span>$240,000 or more</div>
+                    <div><span style="background-color: #dd1c77"></span></div>
+                    <div><span style="background-color: #df65b0"></span></div>
+                    <div><span style="background-color: #d7b5d8"></span></div>
+                    <div><span style="background-color: #f1eef6"></span>$45,000 or less</div>
+                    <div><span style="background-color: #425A7030"></span>No data</div>
+                </div>
+    
+                <div id="cbRentersLegend" class="legend">
+                    <h4>Cost Burdened Renters (2023)</h4>
+                    <div><span style="background-color: #016c59"></span>70%+</div>
+                    <div><span style="background-color: #1c9099"></span></div>
+                    <div><span style="background-color: #67a9cf"></span>30%</div>
+                    <div><span style="background-color: #bdc9e1"></span></div>
+                    <div><span style="background-color: #f6eff7"></span>0%</div>
+                    <div><span style="background-color: #425A7030"></span>No data</div>
+                </div>
+                
+                <div id="cbOwnersLegend" class="legend">
+                    <h4>Cost Burdened Homeowners (2023)</h4>
+                    <div><span style="background-color: #810f7c"></span>70%+</div>
+                    <div><span style="background-color: #8856a7"></span></div>
+                    <div><span style="background-color: #8c96c6"></span>30%</div>
+                    <div><span style="background-color: #b3cde3"></span></div>
+                    <div><span style="background-color: #edf8fb"></span>0%</div>
+                    <div><span style="background-color: #425A7030"></span>No data</div>
+                </div>
+                
+                <div id="pctHHLegend" class="legend">
+                    <h4>Percent Change in Households (2010-2023)</h4>
+                    <div><span style="background-color: #1b7837"></span>55%+</div>
+                    <div><span style="background-color: #7fbf7b"></span></div>
+                    <div><span style="background-color: #d9f0d3"></span></div>
+                    <div><span style="background-color: #f7f7f7"></span>0%</div>
+                    <div><span style="background-color: #e7d4e8"></span></div>
+                    <div><span style="background-color: #af8dc3"></span></div>
+                    <div><span style="background-color: #762a83"></span>-30%+</div>
+                    <div><span style="background-color: #425A7030"></span>No data</div>
+                </div>
+        </div>
+    <div id="map"></div>
+</div>
+
+<script>
+    const INITIAL_LOC = [-83.08, 40.03]//set as Upper Arlington coords
+    const INITIAL_ZOOM = 11.75 //set initial zoom (zoom levels 9-12 best for cities depending on size)
+    const communityScaleGray = "#425A70"
+    const placeOfInterest = "Upper Arlington"
+    //const cart = require('users/jhowarth/eePrimer:modules/cart.js')       //not sure if this module will load and tbh might not be best for this problem
+    const medIncomePalette = [ //Sequential colorBrewer Purple/Red ramp
+                '#f1eef6',
+                '#d7b5d8',
+                '#df65b0',
+                '#dd1c77',
+                '#980043'
+            ]
+    const cbRentersPalette = [ //Sequential colorBrewer GrnBlu ramp
+                '#f6eff7',
+                '#bdc9e1',
+                '#67a9cf',
+                '#1c9099',
+                '#016c59'
+            ]
+    const cbOwnersPalette = [ //Sequential colorBrewer BluPur ramp
+                '#edf8fb',
+                '#b3cde3',
+                '#8c96c6',
+                '#8856a7',
+                '#810f7c'
+            ]
+    const hhChangePalette = [ //Diverging colorBrewer PurGre ramp
+                '#762a83',
+                '#af8dc3',
+                '#e7d4e8',
+                '#f7f7f7',
+                '#d9f0d3',
+                '#7fbf7b',
+                '#1b7837'
+            ]
+ 
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZW10em90MDEiLCJhIjoiY20zZ2kyd3RpMDRnajJscHoyMG5neGJldyJ9.poXi4pgd2CoXKV2B4kg1Cw ';
+    const map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/emtzot01/cm6a8mjb5004g01qrd7cv07mq', //base style draft! no polygons/geojson layers added
+        center: INITIAL_LOC, 
+        zoom: INITIAL_ZOOM 
+    });
+
+    function adjustMapSize() {
+        const sidebarWidth = document.getElementById('sidebar').width;
+        const mapContainer = document.getElementById('map');
+  
+  // Adjust the width of the map based on the sidebar width
+        mapContainer.style.marginLeft = `${sidebarWidth}px`;
+        map.resize(); // Adjust the map's internal size (Mapbox GL JS method)
+        }
+
+
+
+    map.on("load", () => {      //called from github hosted file! already has data attached but can theoretically automate the data processing/maybe pair it with connecting to Mapserver
+        map.addSource("ohioTracts", {
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/main/ohioTracts",
+            promoteId: "GEOID"
+            })
+        
+        map.addSource((placeOfInterest + "-layer"), {     //filter for Upper Arlington/revisit examples to figure out how to best do this!
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/3a42a8dcae81708b41bddbb8527424490e670d8f/ohioPlacesCensus2020.geojson"
+        })
+
+        map.addLayer({
+            id: "ohioTracts-layer",  
+            type: "fill",
+            source: "ohioTracts",
+            paint: {
+                'fill-color': communityScaleGray,
+                "fill-opacity": 0.6,
+                "fill-outline-color": "white",
+                "fill-outline-width": 1,
+                "fill-opacity": [
+                    "case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]},
+            layout: {
+                visibility: "visible"
+            }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+
+        map.addLayer({
+            id: "ohioTracts-medIncome",  
+            type: "fill",
+            source: "ohioTracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "medIncome"], null], communityScaleGray,
+                    ["interpolate", //data dependent styling
+                    ["linear"],
+                    ["get", "medIncome"],
+                    45000,
+                    medIncomePalette[0], 
+                    80000,
+                    medIncomePalette[1],
+                    130000,
+                    medIncomePalette[2],
+                    180000,
+                    medIncomePalette[3],
+                    240000,
+                    medIncomePalette[4]]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "medIncome"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    ) 
+
+    map.addLayer({      //pct cost burdened renters
+            id: "ohioTracts-pctCostBurdenedRenters",  
+            type: "fill",
+            source: "ohioTracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "pctRent30"], null], communityScaleGray,
+                    ["interpolate", //data dependent styling
+                    ["linear"],
+                    ["get", "pctRent30"],
+                    0,
+                    cbRentersPalette[0], 
+                    15,
+                    cbRentersPalette[1],
+                    30,
+                    cbRentersPalette[2],
+                    45,
+                    cbRentersPalette[3],
+                    70,
+                    cbRentersPalette[4]]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "pctRent30"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+    
+
+    map.addLayer({      //pct cost burdened owners
+            id: "ohioTracts-pctCostBurdenedOwners",  
+            type: "fill",
+            source: "ohioTracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "pctOwned30"], null], communityScaleGray,
+                    ["interpolate", //data dependent styling
+                    ["linear"],
+                    ["get", "pctOwned30"],
+                    0,
+                    cbOwnersPalette[0],
+                    15,
+                    cbOwnersPalette[1], 
+                    30,
+                    cbOwnersPalette[2],
+                    45,
+                    cbOwnersPalette[3],
+                    70,
+                    cbOwnersPalette[4],
+                ]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "pctOwned30"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+
+
+    map.addLayer({      //pct unit count change 2010-2023
+            id: "ohioTracts-pctHH",  
+            type: "fill",
+            source: "ohioTracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "pctChangeHH"], null], communityScaleGray,
+                    ["interpolate", //data dependent styling
+                    ["linear"],
+                    ["get", "pctChangeHH"],
+                    -30,
+                    hhChangePalette[0],
+                    -15, 
+                    hhChangePalette[1],
+                    -5,
+                    hhChangePalette[2],
+                    0,
+                    hhChangePalette[3], 
+                    10,
+                    hhChangePalette[4],
+                    25,
+                    hhChangePalette[5],
+                    55,
+                    hhChangePalette[6]
+                ]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "pctChangeHH"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+
+    map.addLayer({
+            id: (placeOfInterest + "-boundary"),  
+            type: "line",
+            source: (placeOfInterest + "-layer"),
+            paint: {
+                "line-color": communityScaleGray,
+                "line-width": 3,
+                "line-opacity": 1,
+                },
+            layout: {
+                visibility: "visible"
+            },
+            filter: ["==", "NAME", placeOfInterest]},
+            "road-label", 
+            "settlement-major-label", 
+            "settlement-subdivision-label", 
+            "settlement-minor-label"
+        )
+
+    const defaultView = (
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none"),
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible"),
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none"), 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none"), 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none"),
+            document.getElementById('pctHHLegend').style.visibility = 'hidden',
+            document.getElementById('cbRentersLegend').style.visibility = 'hidden',
+            document.getElementById('cbOwnersLegend').style.visibility = 'hidden',
+            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
+        )
+
+    defaultView
+    adjustMapSize();
+    });
+
+    window.addEventListener('resize', adjustMapSize);
+
+    //get alerts/pop-ups!!
+    map.on("click", (e)=> {
+        //console.log("click")      //sanity check if I can ever find the console
+        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
+            layers: ["ohioTracts-medIncome"]
+        })
+        if (selectedTract) {
+            //const { NAMELSAD, medIncome } = selectedTract.properties      //play around with the string template and using the constants set up in this line
+        alert(selectedTract.properties.NAMELSAD + " median household income: $" + selectedTract.properties.medIncome + " (2023 dollars).") //edit as needed, should change to styled pop-up that reads tract name, other data incl. medIncome when layer changes 
+        }
+    });
+
+    //pop-up formula!! from gpt
+    map.on('click', (e) => {
+        const [ selectedTract ] = map.queryRenderedFeatures(e.point,  {
+            layers: ["ohioTracts-medIncome"]
+        })
+        if (selectedTract)  {
+    //if (features.length > 0) {
+        //const feature = features[0]; // Choose the first feature in the array (e.g., for a point)
+
+        // Create a new popup
+        new mapboxgl.Popup({ closeButton: true }) //set css/html to add to map (needs a box in html? and then I can say goodbye to alerts??)
+            .setLngLat(selectedTract.geometry.coordinates) // Position popup at geometry coordinates
+            .setHTML(`<h3>${selectedTract.properties.NAMELSAD}</h3><p>${selectedTract.properties.medIncome}</p>`)
+            .addTo(map);
+        }});
+
+
+
+    map.on("click", (e)=> {
+        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
+            layers: ["ohioTracts-layer"]
+        });
+
+        if (selectedTract) {
+            alert(selectedTract.properties.NAMELSAD)
+    }});
+
+    map.on("click", (e)=> {   
+        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
+            layers: ["ohioTracts-pctCostBurdenedRenters"]
+        });
+
+        if (selectedTract) {
+            alert(selectedTract.properties.pctRent30 + "% of renters in " + selectedTract.properties.NAMELSAD + " spend more than 30% of income on housing costs.")
+    }});
+
+    map.on("click", (e)=> {
+        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
+            layers: ["ohioTracts-pctCostBurdenedOwners"]
+        });
+
+        if (selectedTract) {
+            alert(selectedTract.properties.pctOwned30 + "% of homeowners in " + selectedTract.properties.NAMELSAD + " spend more than 30% of income on housing costs.")
+    }});
+
+    map.on("click", (e)=> {
+        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
+            layers: ["ohioTracts-pctHH"]
+        });
+
+        if (selectedTract) {
+            alert(selectedTract.properties.NAMELSAD + " saw a " + selectedTract.properties.pctChangeHH + "% change in the number of households (2010-2023).")
+    }});
+
+    //set default views for legends!
+        document.getElementById('pctHHLegend').style.visibility = 'hidden'
+        document.getElementById('cbRentersLegend').style.visibility = 'hidden'
+        document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
+        document.getElementById('medIncomeLegend').style.visibility = 'hidden'
+
+    //turn on/off data display layers legends
+    document.querySelector('#medIncomeButton').addEventListener("click", () => {
+        const isVisible = map.getLayoutProperty("ohioTracts-medIncome", "visibility") === "none"
+        if (isVisible)  {
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "visible")
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            document.getElementById('medIncomeLegend').style.visibility = 'visible'
+            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
+            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
+            document.getElementById('pctHHLegend').style.visibility = 'hidden'     
+        }   else    {
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible")
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            document.getElementById('pctHHLegend').style.visibility = 'hidden'
+            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
+            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
+            document.getElementById('medIncomeLegend').style.visibility = 'hidden'   
+        }
+    });
+
+    document.querySelector('#pctCBRentersButton').addEventListener("click", () => {
+        const isVisible = map.getLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility") === "none"
+        if (isVisible)  {
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "visible") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
+            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
+            document.getElementById('cbRentersLegend').style.visibility = 'visible'
+            document.getElementById('pctHHLegend').style.visibility = 'hidden'           
+        }   else    {
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible")
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            document.getElementById('pctHHLegend').style.visibility = 'hidden'
+            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
+            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
+            document.getElementById('medIncomeLegend').style.visibility = 'hidden'  
+        }
+    });
+
+    document.querySelector('#pctCBOwnersButton').addEventListener("click", () => {
+        const isVisible = map.getLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility") === "none"
+        if (isVisible)  {
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "visible") 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
+            document.getElementById('cbOwnersLegend').style.visibility = 'visible'
+            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
+            document.getElementById('pctHHLegend').style.visibility = 'hidden' 
+        }   else    {
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible")
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            document.getElementById('pctHHLegend').style.visibility = 'hidden'
+            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
+            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
+            document.getElementById('medIncomeLegend').style.visibility = 'hidden'   
+        }
+    });
+
+    document.querySelector('#pctHHButton').addEventListener("click", () => {
+        const isVisible = map.getLayoutProperty("ohioTracts-pctHH", "visibility") === "none"
+        if (isVisible)  {
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "visible")
+            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
+            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
+            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
+            document.getElementById('pctHHLegend').style.visibility = 'visible'         
+        }   else    {
+            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible")
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            document.getElementById('pctHHLegend').style.visibility = 'hidden'
+            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
+            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
+            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
+        }
+    });
+
+    let hoveredTractId = null
+
+    map.on('mousemove', 'ohioTracts-medIncome', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'ohioTracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        // When the mouse leaves the state-fill layer, update the feature state of the
+        // previously hovered feature.
+        map.on('mouseleave', 'ohioTracts-medIncome', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+
+        map.on('mousemove', 'ohioTracts-pctCostBurdenedRenters', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'ohioTracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'ohioTracts-pctCostBurdenedRenters', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+
+        map.on('mousemove', 'ohioTracts-pctCostBurdenedOwners', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'ohioTracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'ohioTracts-pctCostBurdenedOwners', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+
+        map.on('mousemove', 'ohioTracts-pctHH', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'ohioTracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'ohioTracts-pctHH', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+        
+
+        map.on('mousemove', 'ohioTracts-layer', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'ohioTracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'ohioTracts-layer', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'ohioTracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+        </script>
+    </body>
+</html>

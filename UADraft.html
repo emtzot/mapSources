@@ -1,18 +1,20 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>Upper Arlington Draft</title>
+        <title>Upper Arlington</title>
         <meta name="viewport" content="width=device-width, intial-scale=1" />
 
 <link
   href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
-  rel="stylesheet"
-/>
+  rel="stylesheet">
+
+<link 
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" 
+    rel="stylesheet">
+
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script> <!--mapbox GL JS api-->
     <script src="https://unpkg.com/@turf/turf@^7/turf.min.js"></script> <!--turf.js library-->
-    <!--<script src="https://api.census.gov/data/2023/acs/acs5?get=NAME,B19013_001E&for=tract:*&in=state:39&in=county:049&key=3778d297bf15227cbba0fbbaa02fccd9c09eb2c2"></script> --> <!--ACS 5 year-->
-    <!--<script src="https://api.census.gov/data/2020/dec/pl?get=NAME,geometry&for=tract:*&in=state:39+county:049&key=3778d297bf15227cbba0fbbaa02fccd9c09eb2c2"></script> --> <!--mapserver/geometry API goes here, prayers that it works!!-->
-    <style>
+   
         html, body {
             margin: 0;
             padding: 0;
@@ -25,31 +27,39 @@
             height: 100%;
         }
 
-        .popup {
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
+       .mapboxgl-popup {
+            width: 175px;
+            font: 12px/20px 'Roboto', sans-serif;
+            background-color: #425A70;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            font-family: Arial, Helvetica, sans-serif;
-            max-width: 300px;
-            text-align: center;
-        }
-
-        /* Title styling */
-        .popup h3 {
+            z-index: 9999;
+            display: block;
+            padding: 0;
             margin: 0;
+        }
+
+        .mapboxgl-popup .mapboxgl-popup-tip {
+            display: none;
+        }
+
+        .mapboxgl-popup-header {
+            margin: 0px;
             font-size: 16px;
-            font-weight: bold;
             color: #fff;
-            background-color: #425A70
+            font-weight: bold;
+            padding: 5px;
+            border-bottom: 1px solid #ccc;
+            /*padding-top: 5px;*/
         }
-
-        /* Paragraph styling */
-        .popup p {
-            font-size: 14px;
+    
+        .mapboxgl-popup-content {
+            font-size: 12px;
             color: #425A70;
+            margin-left: 0px;
+            padding: 5px;
+            background-color: #fff;
+            line-height: 1.25;
         }
-
 
         #container  {
            display: flex;
@@ -64,7 +74,7 @@
             padding: 30px;
             background-color: #f2f0ef;
             transition: width 0.3s ease;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Roboto', sans-serif;
         }
 
         /*media queries for smaller screen/window sizes*/
@@ -90,7 +100,7 @@
             display: block;
             padding: 4px;
             margin-bottom: 15px; 
-            font: 'Helvetica Neue';
+            font: 'Roboto', san serif;
             font-size: 14px;
         }
 
@@ -98,7 +108,7 @@
             background-color: #fff;
             border-radius: 4px;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            font: 14px/24px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            font: 14px/24px 'Roboto', Helvetica, sans-serif;
             padding: 10px;
             position: absolute;
             left: 25px;
@@ -112,7 +122,7 @@
  
         .legend h4 {
             margin: 0 0 10px;
-            font: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            font: 'Roboto', sans-serif;
         }
  
         .legend div span {
@@ -121,6 +131,8 @@
             margin-right: 5px;
             width: 20px;
             background-color: white;
+            vertical-align: middle;
+            padding-bottom: 0;
      }
 
     </style>
@@ -182,7 +194,6 @@
     const INITIAL_ZOOM = 11.75 //set initial zoom (zoom levels 9-12 best for cities depending on size)
     const communityScaleGray = "#425A70"
     const placeOfInterest = "Upper Arlington"
-    //const cart = require('users/jhowarth/eePrimer:modules/cart.js')       //not sure if this module will load and tbh might not be best for this problem
     const medIncomePalette = [ //Sequential colorBrewer Purple/Red ramp
                 '#f1eef6',
                 '#d7b5d8',
@@ -315,7 +326,7 @@
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctRent30"], null], communityScaleGray,
-                    ["interpolate", //data dependent styling
+                    ["interpolate", 
                     ["linear"],
                     ["get", "pctRent30"],
                     0,
@@ -354,7 +365,7 @@
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctOwned30"], null], communityScaleGray,
-                    ["interpolate", //data dependent styling
+                    ["interpolate", 
                     ["linear"],
                     ["get", "pctOwned30"],
                     0,
@@ -394,7 +405,7 @@
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctChangeHH"], null], communityScaleGray,
-                    ["interpolate", //data dependent styling
+                    ["interpolate", 
                     ["linear"],
                     ["get", "pctChangeHH"],
                     -30,
@@ -467,17 +478,21 @@
 
     window.addEventListener('resize', adjustMapSize);
 
-    //get alerts/pop-ups!!
-    map.on("click", (e)=> {
-        //console.log("click")      //sanity check if I can ever find the console
-        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
+    map.on('click', (e) => {
+        const [ selectedTract ] = map.queryRenderedFeatures(e.point,  {
             layers: ["ohioTracts-medIncome"]
         })
-        if (selectedTract) {
-            //const { NAMELSAD, medIncome } = selectedTract.properties      //play around with the string template and using the constants set up in this line
-        alert(selectedTract.properties.NAMELSAD + " median household income: $" + selectedTract.properties.medIncome + " (2023 dollars).") //edit as needed, should change to styled pop-up that reads tract name, other data incl. medIncome when layer changes 
-        }
-    });
+        if (selectedTract)  {
+                new mapboxgl.Popup({closeButton: true}, {clickToClose: true}) 
+                .setLngLat(selectedTract.geometry.coordinates[0][0])
+                .setHTML(`<div class="mapboxgl-popup">
+                    <div class ="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
+                    <div class="mapboxgl-popup-content">Annual median income: $${selectedTract.properties.medIncome} (2023 USD).
+                    </div>
+                </div>`)
+                .addTo(map);
+        }});
+
 
     map.on("click", (e)=> {
         const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
@@ -485,8 +500,15 @@
         });
 
         if (selectedTract) {
-            alert(selectedTract.properties.NAMELSAD)
+            new mapboxgl.Popup({closeButton: true}, {clickToClose: true}) 
+            .setLngLat(selectedTract.geometry.coordinates[0][0]) // Position popup at geometry coordinates
+            .setHTML(`<div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
+            </div>`)
+            .addTo(map)
     }});
+
+
 
     map.on("click", (e)=> {   
         const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
@@ -494,7 +516,14 @@
         });
 
         if (selectedTract) {
-            alert(selectedTract.properties.pctRent30 + "% of renters in " + selectedTract.properties.NAMELSAD + " spend more than 30% of income on housing costs.")
+            new mapboxgl.Popup({closeOnClick: true}, {closeButton: true}) 
+            .setLngLat(selectedTract.geometry.coordinates[0][0]) 
+            .setHTML(`<div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
+                <div class="mapboxgl-popup-content">${selectedTract.properties.pctRent30}% of renters in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.
+                </div>
+            </div>`)
+            .addTo(map)
     }});
 
     map.on("click", (e)=> {
@@ -503,7 +532,14 @@
         });
 
         if (selectedTract) {
-            alert(selectedTract.properties.pctOwned30 + "% of homeowners in " + selectedTract.properties.NAMELSAD + " spend more than 30% of income on housing costs.")
+            new mapboxgl.Popup({closeOnClick: true}, {closeButton: true}) //set css/html to add to map (needs a box in html? and then I can say goodbye to alerts??)
+            .setLngLat(selectedTract.geometry.coordinates[0][0]) // Position popup at geometry coordinates
+            .setHTML(`<div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
+                <div class="mapboxgl-popup-content">${selectedTract.properties.pctRent30}% of homeowners in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.
+                </div>
+            </div>`)
+            .addTo(map)
     }});
 
     map.on("click", (e)=> {
@@ -512,7 +548,14 @@
         });
 
         if (selectedTract) {
-            alert(selectedTract.properties.NAMELSAD + " saw a " + selectedTract.properties.pctChangeHH + "% change in the number of households (2010-2023).")
+            new mapboxgl.Popup({closeOnClick: true}, {closeButton: true}) 
+            .setLngLat(selectedTract.geometry.coordinates[0][0]) 
+            .setHTML(`<div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
+                <div class="mapboxgl-popup-content">${selectedTract.properties.NAMELSAD} saw a ${selectedTract.properties.pctChangeHH}% change in the number of households (2010-2023).
+                </div>
+            </div>`)
+            .addTo(map)
     }});
 
     //set default views for legends!
@@ -640,8 +683,6 @@
             }
         });
 
-        // When the mouse leaves the state-fill layer, update the feature state of the
-        // previously hovered feature.
         map.on('mouseleave', 'ohioTracts-medIncome', () => {
             if (hoveredTractId !== null) {
                 map.setFeatureState(

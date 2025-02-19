@@ -2,7 +2,7 @@
     <head>
         <meta charset="utf-8" />
         <title>Upper Arlington</title>
-        <meta name="viewport" content="width=device-width, intial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <link
   href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
@@ -14,7 +14,7 @@
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script> <!--mapbox GL JS api-->
     <script src="https://unpkg.com/@turf/turf@^7/turf.min.js"></script> <!--turf.js library-->
-   
+    <style>
         html, body {
             margin: 0;
             padding: 0;
@@ -23,7 +23,7 @@
 
         #map {
             width: 100%;
-            flex-grow: 1;
+            flex-shrink: 1;
             height: 100%;
         }
 
@@ -42,21 +42,27 @@
             display: none;
         }
 
+        .mapboxgl-popup-close-button {
+            top: 2px; 
+            right: 4px; 
+            width: 7px;
+            height: 7px;
+            color: #fff; 
+        }
+
         .mapboxgl-popup-header {
             margin: 0px;
             font-size: 16px;
             color: #fff;
             font-weight: bold;
             padding: 5px;
-            border-bottom: 1px solid #ccc;
-            /*padding-top: 5px;*/
         }
     
         .mapboxgl-popup-content {
             font-size: 12px;
             color: #425A70;
             margin-left: 0px;
-            padding: 5px;
+            padding: 8px;
             background-color: #fff;
             line-height: 1.25;
         }
@@ -64,17 +70,23 @@
         #container  {
            display: flex;
            height: 100%;
-           width: 100%
+           width: 100%;
+           position: relative;
         }
 
-        #sidebar    {
-            width: 300px;
-            flex-shrink: 1;  
-            height: 100%; 
-            padding: 30px;
+        #sidebar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%; 
             background-color: #f2f0ef;
+            padding: 15px;
+            z-index: 10;
             transition: width 0.3s ease;
             font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         /*media queries for smaller screen/window sizes*/
@@ -97,11 +109,14 @@
         }
 
         button  {
-            display: block;
-            padding: 4px;
-            margin-bottom: 15px; 
-            font: 'Roboto', san serif;
-            font-size: 14px;
+            display: line;
+            padding: 15px;
+            margin-left: 15px;
+            margin-right: 15px;
+            margin-bottom: 10px;
+            font: 'Roboto', sans-serif;
+            font-size: 16px;
+            border-radius: 14px;
         }
 
         .legend {
@@ -111,12 +126,12 @@
             font: 14px/24px 'Roboto', Helvetica, sans-serif;
             padding: 10px;
             position: absolute;
-            left: 25px;
-            width: 200px;
+            right: 25px;
+            top: 25px;
+            width: 180px;
             flex-shrink: 1;
             text-wrap: balance;
-            top: 260px;
-            z-index: 1;
+            z-index: 11;
             line-height: 18px;
         }
  
@@ -133,17 +148,18 @@
             background-color: white;
             vertical-align: middle;
             padding-bottom: 0;
-     }
+        }
 
     </style>
 </head>
 <body>
     <div id="container">
         <div id="sidebar">
-            <button id="medIncomeButton">Median Annual Income</button> 
+            <button id="medIncomeButton">Median Annual Household Income</button> 
             <button id="pctCBRentersButton">Percent of Renters, Cost Burdened</button> 
             <button id="pctCBOwnersButton">Percent of Homeowners, Cost Burdened</button> 
             <button id="pctHHButton">Percent Change in Households (2010-2023)</button> 
+            </div>
             <div id="medIncomeLegend" class="legend">
                     <h4>Median Annual Household Income (2023, USD)</h4>
                     <div><span style="background-color: #980043"></span>$240,000 or more</div>
@@ -153,8 +169,7 @@
                     <div><span style="background-color: #f1eef6"></span>$45,000 or less</div>
                     <div><span style="background-color: #425A7030"></span>No data</div>
                 </div>
-    
-                <div id="cbRentersLegend" class="legend">
+            <div id="cbRentersLegend" class="legend">
                     <h4>Cost Burdened Renters (2023)</h4>
                     <div><span style="background-color: #016c59"></span>70%+</div>
                     <div><span style="background-color: #1c9099"></span></div>
@@ -163,8 +178,7 @@
                     <div><span style="background-color: #f6eff7"></span>0%</div>
                     <div><span style="background-color: #425A7030"></span>No data</div>
                 </div>
-                
-                <div id="cbOwnersLegend" class="legend">
+            <div id="cbOwnersLegend" class="legend">
                     <h4>Cost Burdened Homeowners (2023)</h4>
                     <div><span style="background-color: #810f7c"></span>70%+</div>
                     <div><span style="background-color: #8856a7"></span></div>
@@ -173,8 +187,7 @@
                     <div><span style="background-color: #edf8fb"></span>0%</div>
                     <div><span style="background-color: #425A7030"></span>No data</div>
                 </div>
-                
-                <div id="pctHHLegend" class="legend">
+            <div id="pctHHLegend" class="legend">
                     <h4>Percent Change in Households (2010-2023)</h4>
                     <div><span style="background-color: #1b7837"></span>55%+</div>
                     <div><span style="background-color: #7fbf7b"></span></div>
@@ -185,12 +198,11 @@
                     <div><span style="background-color: #762a83"></span>-30%+</div>
                     <div><span style="background-color: #425A7030"></span>No data</div>
                 </div>
-        </div>
     <div id="map"></div>
 </div>
 
 <script>
-    const INITIAL_LOC = [-83.08, 40.03]//set as Upper Arlington coords
+    const INITIAL_LOC = [-83.08, 40.02]//set as Upper Arlington coords
     const INITIAL_ZOOM = 11.75 //set initial zoom (zoom levels 9-12 best for cities depending on size)
     const communityScaleGray = "#425A70"
     const placeOfInterest = "Upper Arlington"
@@ -246,21 +258,21 @@
 
 
     map.on("load", () => {      //called from github hosted file! already has data attached but can theoretically automate the data processing/maybe pair it with connecting to Mapserver
-        map.addSource("ohioTracts", {
+        map.addSource("tracts", {
             type: "geojson",
             data: "https://raw.githubusercontent.com/emtzot/mapSources/main/ohioTracts",
             promoteId: "GEOID"
             })
         
-        map.addSource((placeOfInterest + "-layer"), {     //filter for Upper Arlington/revisit examples to figure out how to best do this!
+        map.addSource((placeOfInterest + "-layer"), {     //filter here for Upper Arlington?? filter is applied at the addition of the place boundary layer
             type: "geojson",
             data: "https://raw.githubusercontent.com/emtzot/mapSources/3a42a8dcae81708b41bddbb8527424490e670d8f/ohioPlacesCensus2020.geojson"
         })
 
         map.addLayer({
-            id: "ohioTracts-layer",  
+            id: "tracts-layer",  
             type: "fill",
-            source: "ohioTracts",
+            source: "tracts",
             paint: {
                 'fill-color': communityScaleGray,
                 "fill-opacity": 0.6,
@@ -282,9 +294,9 @@
     )
 
         map.addLayer({
-            id: "ohioTracts-medIncome",  
+            id: "tracts-medIncome",  
             type: "fill",
-            source: "ohioTracts",
+            source: "tracts",
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "medIncome"], null], communityScaleGray,
@@ -320,13 +332,13 @@
     ) 
 
     map.addLayer({      //pct cost burdened renters
-            id: "ohioTracts-pctCostBurdenedRenters",  
+            id: "tracts-pctCostBurdenedRenters",  
             type: "fill",
-            source: "ohioTracts",
+            source: "tracts",
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctRent30"], null], communityScaleGray,
-                    ["interpolate", 
+                    ["interpolate", //data dependent styling
                     ["linear"],
                     ["get", "pctRent30"],
                     0,
@@ -359,13 +371,13 @@
     
 
     map.addLayer({      //pct cost burdened owners
-            id: "ohioTracts-pctCostBurdenedOwners",  
+            id: "tracts-pctCostBurdenedOwners",  
             type: "fill",
-            source: "ohioTracts",
+            source: "tracts",
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctOwned30"], null], communityScaleGray,
-                    ["interpolate", 
+                    ["interpolate",
                     ["linear"],
                     ["get", "pctOwned30"],
                     0,
@@ -399,13 +411,13 @@
 
 
     map.addLayer({      //pct unit count change 2010-2023
-            id: "ohioTracts-pctHH",  
+            id: "tracts-pctHH",  
             type: "fill",
-            source: "ohioTracts",
+            source: "tracts",
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctChangeHH"], null], communityScaleGray,
-                    ["interpolate", 
+                    ["interpolate", //data dependent styling
                     ["linear"],
                     ["get", "pctChangeHH"],
                     -30,
@@ -461,11 +473,11 @@
         )
 
     const defaultView = (
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none"),
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible"),
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none"), 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none"), 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none"),
+            map.setLayoutProperty("tracts-medIncome", "visibility", "none"),
+            map.setLayoutProperty("tracts-layer", "visibility", "visible"),
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none"), 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none"), 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "none"),
             document.getElementById('pctHHLegend').style.visibility = 'hidden',
             document.getElementById('cbRentersLegend').style.visibility = 'hidden',
             document.getElementById('cbOwnersLegend').style.visibility = 'hidden',
@@ -478,85 +490,109 @@
 
     window.addEventListener('resize', adjustMapSize);
 
+
+    //adding pop-ups!!
     map.on('click', (e) => {
-        const [ selectedTract ] = map.queryRenderedFeatures(e.point,  {
-            layers: ["ohioTracts-medIncome"]
-        })
-        if (selectedTract)  {
-                new mapboxgl.Popup({closeButton: true}, {clickToClose: true}) 
-                .setLngLat(selectedTract.geometry.coordinates[0][0])
-                .setHTML(`<div class="mapboxgl-popup">
-                    <div class ="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
-                    <div class="mapboxgl-popup-content">Annual median income: $${selectedTract.properties.medIncome} (2023 USD).
-                    </div>
-                </div>`)
-                .addTo(map);
-        }});
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-medIncome"]
+        });
+
+        if (selectedTract) {
+            const medianIncome = selectedTract.properties.medIncome;
+            const displayIncome = medianIncome === null || medianIncome === undefined ? 'No available data' : `Annual median household income: $${medianIncome.toLocaleString()} (2023 USD)`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
+                <div class="mapboxgl-popup-content">${displayIncome}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
 
 
     map.on("click", (e)=> {
         const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
-            layers: ["ohioTracts-layer"]
+            layers: ["tracts-layer"]
         });
 
         if (selectedTract) {
-            new mapboxgl.Popup({closeButton: true}, {clickToClose: true}) 
-            .setLngLat(selectedTract.geometry.coordinates[0][0]) // Position popup at geometry coordinates
-            .setHTML(`<div class="mapboxgl-popup">
-                <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
-            </div>`)
-            .addTo(map)
-    }});
-
-
-
-    map.on("click", (e)=> {   
-        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
-            layers: ["ohioTracts-pctCostBurdenedRenters"]
-        });
-
-        if (selectedTract) {
-            new mapboxgl.Popup({closeOnClick: true}, {closeButton: true}) 
+            new mapboxgl.Popup({closeButton: true}, {clickToClose: true})
             .setLngLat(selectedTract.geometry.coordinates[0][0]) 
             .setHTML(`<div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
                 <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
-                <div class="mapboxgl-popup-content">${selectedTract.properties.pctRent30}% of renters in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.
-                </div>
             </div>`)
             .addTo(map)
     }});
 
-    map.on("click", (e)=> {
-        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
-            layers: ["ohioTracts-pctCostBurdenedOwners"]
+
+    map.on('click', (e) => {
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-pctCostBurdenedRenters"]
         });
 
         if (selectedTract) {
-            new mapboxgl.Popup({closeOnClick: true}, {closeButton: true}) //set css/html to add to map (needs a box in html? and then I can say goodbye to alerts??)
-            .setLngLat(selectedTract.geometry.coordinates[0][0]) // Position popup at geometry coordinates
-            .setHTML(`<div class="mapboxgl-popup">
+            const pctRent30 = selectedTract.properties.pctRent30;
+            const displayPctRent30 = pctRent30 === null || pctRent30 === undefined ? 'No available data' : `${pctRent30}% of renters in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
                 <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
-                <div class="mapboxgl-popup-content">${selectedTract.properties.pctRent30}% of homeowners in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.
+                <div class="mapboxgl-popup-content">${displayPctRent30}
                 </div>
             </div>`)
-            .addTo(map)
+            .addTo(map);
     }});
 
-    map.on("click", (e)=> {
-        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
-            layers: ["ohioTracts-pctHH"]
+    map.on('click', (e) => {
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-pctCostBurdenedOwners"]
         });
 
         if (selectedTract) {
-            new mapboxgl.Popup({closeOnClick: true}, {closeButton: true}) 
-            .setLngLat(selectedTract.geometry.coordinates[0][0]) 
-            .setHTML(`<div class="mapboxgl-popup">
+            const pctOwned30 = selectedTract.properties.pctOwned30;
+            const displayPctOwned30 = pctOwned30 === null || pctOwned30 === undefined ? 'No available data' : `${pctOwned30}% of homeowners in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
                 <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
-                <div class="mapboxgl-popup-content">${selectedTract.properties.NAMELSAD} saw a ${selectedTract.properties.pctChangeHH}% change in the number of households (2010-2023).
+                <div class="mapboxgl-popup-content">${displayPctOwned30}
                 </div>
             </div>`)
-            .addTo(map)
+            .addTo(map);
     }});
+
+    map.on('click', (e) => {
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-pctHH"]
+        });
+
+        if (selectedTract) {
+            const pctChangeHH = selectedTract.properties.pctChangeHH;
+            const displayPctChangeHH = pctChangeHH === null || pctChangeHH === undefined ? 'No available data' : `${selectedTract.properties.NAMELSAD} saw a ${pctChangeHH}% change in the number of households (2010-2023).`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAMELSAD}</div>
+                <div class="mapboxgl-popup-content">${displayPctChangeHH}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
 
     //set default views for legends!
         document.getElementById('pctHHLegend').style.visibility = 'hidden'
@@ -566,23 +602,23 @@
 
     //turn on/off data display layers legends
     document.querySelector('#medIncomeButton').addEventListener("click", () => {
-        const isVisible = map.getLayoutProperty("ohioTracts-medIncome", "visibility") === "none"
+        const isVisible = map.getLayoutProperty("tracts-medIncome", "visibility") === "none"
         if (isVisible)  {
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "visible")
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            map.setLayoutProperty("tracts-medIncome", "visibility", "visible")
+            map.setLayoutProperty("tracts-layer", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
             document.getElementById('medIncomeLegend').style.visibility = 'visible'
             document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
             document.getElementById('cbRentersLegend').style.visibility = 'hidden'
             document.getElementById('pctHHLegend').style.visibility = 'hidden'     
         }   else    {
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible")
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("tracts-layer", "visibility", "visible")
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
             document.getElementById('pctHHLegend').style.visibility = 'hidden'
             document.getElementById('cbRentersLegend').style.visibility = 'hidden'
             document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
@@ -591,23 +627,23 @@
     });
 
     document.querySelector('#pctCBRentersButton').addEventListener("click", () => {
-        const isVisible = map.getLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility") === "none"
+        const isVisible = map.getLayoutProperty("tracts-pctCostBurdenedRenters", "visibility") === "none"
         if (isVisible)  {
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "visible") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("tracts-layer", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "visible") 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
             document.getElementById('medIncomeLegend').style.visibility = 'hidden'
             document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
             document.getElementById('cbRentersLegend').style.visibility = 'visible'
             document.getElementById('pctHHLegend').style.visibility = 'hidden'           
         }   else    {
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible")
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("tracts-layer", "visibility", "visible")
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
             document.getElementById('pctHHLegend').style.visibility = 'hidden'
             document.getElementById('cbRentersLegend').style.visibility = 'hidden'
             document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
@@ -616,23 +652,23 @@
     });
 
     document.querySelector('#pctCBOwnersButton').addEventListener("click", () => {
-        const isVisible = map.getLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility") === "none"
+        const isVisible = map.getLayoutProperty("tracts-pctCostBurdenedOwners", "visibility") === "none"
         if (isVisible)  {
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "visible") 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("tracts-layer", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "visible") 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
             document.getElementById('medIncomeLegend').style.visibility = 'hidden'
             document.getElementById('cbOwnersLegend').style.visibility = 'visible'
             document.getElementById('cbRentersLegend').style.visibility = 'hidden'
             document.getElementById('pctHHLegend').style.visibility = 'hidden' 
         }   else    {
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible")
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("tracts-layer", "visibility", "visible")
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
             document.getElementById('pctHHLegend').style.visibility = 'hidden'
             document.getElementById('cbRentersLegend').style.visibility = 'hidden'
             document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
@@ -641,23 +677,23 @@
     });
 
     document.querySelector('#pctHHButton').addEventListener("click", () => {
-        const isVisible = map.getLayoutProperty("ohioTracts-pctHH", "visibility") === "none"
+        const isVisible = map.getLayoutProperty("tracts-pctHH", "visibility") === "none"
         if (isVisible)  {
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "visible")
+            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("tracts-layer", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "visible")
             document.getElementById('medIncomeLegend').style.visibility = 'hidden'
             document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
             document.getElementById('cbRentersLegend').style.visibility = 'hidden'
             document.getElementById('pctHHLegend').style.visibility = 'visible'         
         }   else    {
-            map.setLayoutProperty("ohioTracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("ohioTracts-layer", "visibility", "visible")
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("ohioTracts-pctHH", "visibility", "none")
+            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
+            map.setLayoutProperty("tracts-layer", "visibility", "visible")
+            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
+            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
             document.getElementById('pctHHLegend').style.visibility = 'hidden'
             document.getElementById('cbRentersLegend').style.visibility = 'hidden'
             document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
@@ -667,26 +703,26 @@
 
     let hoveredTractId = null
 
-    map.on('mousemove', 'ohioTracts-medIncome', (e) => {
+    map.on('mousemove', 'tracts-medIncome', (e) => {
             if (e.features.length > 0) {
                 if (hoveredTractId !== null) {
                     map.setFeatureState(
-                        { source: 'ohioTracts', id: hoveredTractId },
+                        { source: 'tracts', id: hoveredTractId },
                         { hover: false }
                     );
                 }
                 hoveredTractId = e.features[0].id;
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: true }
                 );
             }
         });
 
-        map.on('mouseleave', 'ohioTracts-medIncome', () => {
+        map.on('mouseleave', 'tracts-medIncome', () => {
             if (hoveredTractId !== null) {
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: false }
                 );
             }
@@ -694,26 +730,26 @@
         });
 
 
-        map.on('mousemove', 'ohioTracts-pctCostBurdenedRenters', (e) => {
+        map.on('mousemove', 'tracts-pctCostBurdenedRenters', (e) => {
             if (e.features.length > 0) {
                 if (hoveredTractId !== null) {
                     map.setFeatureState(
-                        { source: 'ohioTracts', id: hoveredTractId },
+                        { source: 'tracts', id: hoveredTractId },
                         { hover: false }
                     );
                 }
                 hoveredTractId = e.features[0].id;
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: true }
                 );
             }
         });
 
-        map.on('mouseleave', 'ohioTracts-pctCostBurdenedRenters', () => {
+        map.on('mouseleave', 'tracts-pctCostBurdenedRenters', () => {
             if (hoveredTractId !== null) {
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: false }
                 );
             }
@@ -721,26 +757,26 @@
         });
 
 
-        map.on('mousemove', 'ohioTracts-pctCostBurdenedOwners', (e) => {
+        map.on('mousemove', 'tracts-pctCostBurdenedOwners', (e) => {
             if (e.features.length > 0) {
                 if (hoveredTractId !== null) {
                     map.setFeatureState(
-                        { source: 'ohioTracts', id: hoveredTractId },
+                        { source: 'tracts', id: hoveredTractId },
                         { hover: false }
                     );
                 }
                 hoveredTractId = e.features[0].id;
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: true }
                 );
             }
         });
 
-        map.on('mouseleave', 'ohioTracts-pctCostBurdenedOwners', () => {
+        map.on('mouseleave', 'tracts-pctCostBurdenedOwners', () => {
             if (hoveredTractId !== null) {
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: false }
                 );
             }
@@ -748,26 +784,26 @@
         });
 
 
-        map.on('mousemove', 'ohioTracts-pctHH', (e) => {
+        map.on('mousemove', 'tracts-pctHH', (e) => {
             if (e.features.length > 0) {
                 if (hoveredTractId !== null) {
                     map.setFeatureState(
-                        { source: 'ohioTracts', id: hoveredTractId },
+                        { source: 'tracts', id: hoveredTractId },
                         { hover: false }
                     );
                 }
                 hoveredTractId = e.features[0].id;
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: true }
                 );
             }
         });
 
-        map.on('mouseleave', 'ohioTracts-pctHH', () => {
+        map.on('mouseleave', 'tracts-pctHH', () => {
             if (hoveredTractId !== null) {
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: false }
                 );
             }
@@ -775,26 +811,26 @@
         });
         
 
-        map.on('mousemove', 'ohioTracts-layer', (e) => {
+        map.on('mousemove', 'tracts-layer', (e) => {
             if (e.features.length > 0) {
                 if (hoveredTractId !== null) {
                     map.setFeatureState(
-                        { source: 'ohioTracts', id: hoveredTractId },
+                        { source: 'tracts', id: hoveredTractId },
                         { hover: false }
                     );
                 }
                 hoveredTractId = e.features[0].id;
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: true }
                 );
             }
         });
 
-        map.on('mouseleave', 'ohioTracts-layer', () => {
+        map.on('mouseleave', 'tracts-layer', () => {
             if (hoveredTractId !== null) {
                 map.setFeatureState(
-                    { source: 'ohioTracts', id: hoveredTractId },
+                    { source: 'tracts', id: hoveredTractId },
                     { hover: false }
                 );
             }

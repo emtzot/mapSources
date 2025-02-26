@@ -1,7 +1,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>Upper Arlington</title>
+        <title>Upper Arlington Draft</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <link
@@ -12,13 +12,15 @@
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" 
     rel="stylesheet">
 
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script> <!--mapbox GL JS api-->
-    <script src="https://unpkg.com/@turf/turf@^7/turf.min.js"></script> <!--turf.js library-->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script> 
+    <script src="https://unpkg.com/@turf/turf@^7/turf.min.js"></script> 
+
     <style>
         html, body {
             margin: 0;
             padding: 0;
             height: 100%;
+            width: 100%;
         }
 
         #map {
@@ -74,60 +76,34 @@
            position: relative;
         }
 
-        #sidebar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%; 
-            background-color: #f2f0ef;
-            padding: 15px;
-            z-index: 10;
-            transition: width 0.3s ease;
-            font-family: 'Roboto', sans-serif;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        /*media queries for smaller screen/window sizes*/
-        @media (max-width: 768px)   {
-            #sidebar    {
-                width: 175px;
-            } 
-        }
-
-        @media (max-width: 480px)   {
-            #sidebar    {
-                width: 100px;
-            }  
-        }
-
-        @media (max-width: 320px)   {
-            #sidebar    {
-                width: 50px;
-            }   
-        }
-
-        button  {
-            display: line;
-            padding: 15px;
-            margin-left: 15px;
-            margin-right: 15px;
-            margin-bottom: 10px;
-            font: 'Roboto', sans-serif;
+        #layer-dropdown {
+            width: auto;
             font-size: 16px;
-            border-radius: 14px;
+            padding: 8px;
+            margin: 10px 0;
+            z-index: 10;
+            background-color: #f2f0ef;
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            font: 'Roboto', sans-serif;
+            font-size: 14px;
+            display: flex;
+            flex-shrink: 1;
+            border-radius: 2;
+            opacity: 0.95;
+            border: #80808090;
         }
 
         .legend {
             background-color: #fff;
             border-radius: 4px;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            font: 14px/24px 'Roboto', Helvetica, sans-serif;
+            font: 14px/24px 'Roboto', sans-serif;
             padding: 10px;
             position: absolute;
-            right: 25px;
-            top: 25px;
+            right: 30px;
+            bottom: 50px;
             width: 180px;
             flex-shrink: 1;
             text-wrap: balance;
@@ -148,19 +124,21 @@
             background-color: white;
             vertical-align: middle;
             padding-bottom: 0;
+            flex-wrap: nowrap;
         }
 
     </style>
 </head>
 <body>
     <div id="container">
-        <div id="sidebar">
-            <button id="medIncomeButton">Median Annual Household Income</button> 
-            <button id="pctCBRentersButton">Percent of Renters, Cost Burdened</button> 
-            <button id="pctCBOwnersButton">Percent of Homeowners, Cost Burdened</button> 
-            <button id="pctHHButton">Percent Change in Households (2010-2023)</button> 
-            </div>
-            <div id="medIncomeLegend" class="legend">
+        <select id="layer-dropdown">
+            <option value="tracts-medIncome">Median Annual Household Income</option> 
+            <option value="tracts-pctCostBurdenedRenters">Percent of Renters, Cost Burdened</option> 
+            <option value="tracts-pctCostBurdenedOwners">Percent of Homeowners, Cost Burdened</option> 
+            <option value="tracts-pctHH">Percent Change in Households (2010-2023)</option>
+            <option value="tracts-layer">Upper Arlington</option>
+        </select>
+            <div id="medIncomeLegend" class="legend" style="display: block;">
                     <h4>Median Annual Household Income (2023, USD)</h4>
                     <div><span style="background-color: #980043"></span>$240,000 or more</div>
                     <div><span style="background-color: #dd1c77"></span></div>
@@ -169,7 +147,7 @@
                     <div><span style="background-color: #f1eef6"></span>$45,000 or less</div>
                     <div><span style="background-color: #425A7030"></span>No data</div>
                 </div>
-            <div id="cbRentersLegend" class="legend">
+            <div id="cbRentersLegend" class="legend" style="display: none;">
                     <h4>Cost Burdened Renters (2023)</h4>
                     <div><span style="background-color: #016c59"></span>70%+</div>
                     <div><span style="background-color: #1c9099"></span></div>
@@ -178,7 +156,7 @@
                     <div><span style="background-color: #f6eff7"></span>0%</div>
                     <div><span style="background-color: #425A7030"></span>No data</div>
                 </div>
-            <div id="cbOwnersLegend" class="legend">
+            <div id="cbOwnersLegend" class="legend" style="display: none;">
                     <h4>Cost Burdened Homeowners (2023)</h4>
                     <div><span style="background-color: #810f7c"></span>70%+</div>
                     <div><span style="background-color: #8856a7"></span></div>
@@ -187,7 +165,7 @@
                     <div><span style="background-color: #edf8fb"></span>0%</div>
                     <div><span style="background-color: #425A7030"></span>No data</div>
                 </div>
-            <div id="pctHHLegend" class="legend">
+            <div id="pctHHLegend" class="legend" style="display: none;">
                     <h4>Percent Change in Households (2010-2023)</h4>
                     <div><span style="background-color: #1b7837"></span>55%+</div>
                     <div><span style="background-color: #7fbf7b"></span></div>
@@ -202,8 +180,8 @@
 </div>
 
 <script>
-    const INITIAL_LOC = [-83.08, 40.02]//set as Upper Arlington coords
-    const INITIAL_ZOOM = 11.75 //set initial zoom (zoom levels 9-12 best for cities depending on size)
+    const INITIAL_LOC = [-83.08, 40.03]
+    const INITIAL_ZOOM = 11.9 //set initial zoom (zoom levels 9-12 best for cities depending on size)
     const communityScaleGray = "#425A70"
     const placeOfInterest = "Upper Arlington"
     const medIncomePalette = [ //Sequential colorBrewer Purple/Red ramp
@@ -240,8 +218,8 @@
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiZW10em90MDEiLCJhIjoiY20zZ2kyd3RpMDRnajJscHoyMG5neGJldyJ9.poXi4pgd2CoXKV2B4kg1Cw ';
     const map = new mapboxgl.Map({
-        container: 'map', // container id
-        style: 'mapbox://styles/emtzot01/cm6a8mjb5004g01qrd7cv07mq', //base style draft! no polygons/geojson layers added
+        container: 'map', 
+        style: 'mapbox://styles/emtzot01/cm6a8mjb5004g01qrd7cv07mq', 
         center: INITIAL_LOC, 
         zoom: INITIAL_ZOOM 
     });
@@ -250,21 +228,20 @@
         const sidebarWidth = document.getElementById('sidebar').width;
         const mapContainer = document.getElementById('map');
   
-  // Adjust the width of the map based on the sidebar width
         mapContainer.style.marginLeft = `${sidebarWidth}px`;
-        map.resize(); // Adjust the map's internal size (Mapbox GL JS method)
+        map.resize(); 
         }
 
 
 
-    map.on("load", () => {      //called from github hosted file! already has data attached but can theoretically automate the data processing/maybe pair it with connecting to Mapserver
+    map.on("load", () => {      
         map.addSource("tracts", {
             type: "geojson",
             data: "https://raw.githubusercontent.com/emtzot/mapSources/main/ohioTracts",
             promoteId: "GEOID"
             })
         
-        map.addSource((placeOfInterest + "-layer"), {     //filter here for Upper Arlington?? filter is applied at the addition of the place boundary layer
+        map.addSource((placeOfInterest + "-layer"), {    
             type: "geojson",
             data: "https://raw.githubusercontent.com/emtzot/mapSources/3a42a8dcae81708b41bddbb8527424490e670d8f/ohioPlacesCensus2020.geojson"
         })
@@ -285,7 +262,7 @@
                     0.6
             ]},
             layout: {
-                visibility: "visible"
+                visibility: "none"
             }
         },"road-label", 
         "settlement-major-label", 
@@ -300,7 +277,7 @@
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "medIncome"], null], communityScaleGray,
-                    ["interpolate", //data dependent styling
+                    ["interpolate", 
                     ["linear"],
                     ["get", "medIncome"],
                     45000,
@@ -323,7 +300,7 @@
             ]]
              },
              layout: {
-                visibility: "none"
+                visibility: "visible"
              }
         },"road-label", 
         "settlement-major-label", 
@@ -331,14 +308,14 @@
         "settlement-minor-label"
     ) 
 
-    map.addLayer({      //pct cost burdened renters
+    map.addLayer({      
             id: "tracts-pctCostBurdenedRenters",  
             type: "fill",
             source: "tracts",
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctRent30"], null], communityScaleGray,
-                    ["interpolate", //data dependent styling
+                    ["interpolate", 
                     ["linear"],
                     ["get", "pctRent30"],
                     0,
@@ -370,7 +347,7 @@
     )
     
 
-    map.addLayer({      //pct cost burdened owners
+    map.addLayer({      
             id: "tracts-pctCostBurdenedOwners",  
             type: "fill",
             source: "tracts",
@@ -410,14 +387,14 @@
     )
 
 
-    map.addLayer({      //pct unit count change 2010-2023
+    map.addLayer({     
             id: "tracts-pctHH",  
             type: "fill",
             source: "tracts",
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctChangeHH"], null], communityScaleGray,
-                    ["interpolate", //data dependent styling
+                    ["interpolate",
                     ["linear"],
                     ["get", "pctChangeHH"],
                     -30,
@@ -472,26 +449,13 @@
             "settlement-minor-label"
         )
 
-    const defaultView = (
-            map.setLayoutProperty("tracts-medIncome", "visibility", "none"),
-            map.setLayoutProperty("tracts-layer", "visibility", "visible"),
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none"), 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none"), 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "none"),
-            document.getElementById('pctHHLegend').style.visibility = 'hidden',
-            document.getElementById('cbRentersLegend').style.visibility = 'hidden',
-            document.getElementById('cbOwnersLegend').style.visibility = 'hidden',
-            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
-        )
-
-    defaultView
+    //defaultView
     adjustMapSize();
     });
 
     window.addEventListener('resize', adjustMapSize);
 
 
-    //adding pop-ups!!
     map.on('click', (e) => {
         const [selectedTract] = map.queryRenderedFeatures(e.point, {               
             layers: ["tracts-medIncome"]
@@ -537,7 +501,8 @@
 
         if (selectedTract) {
             const pctRent30 = selectedTract.properties.pctRent30;
-            const displayPctRent30 = pctRent30 === null || pctRent30 === undefined ? 'No available data' : `${pctRent30}% of renters in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.`;
+            const roundedPctRent30 = Math.round(pctRent30 * 10) / 10
+            const displayPctRent30 = pctRent30 === null || pctRent30 === undefined ? 'No available data' : `${roundedPctRent30}% of renters in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.`;
 
             new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
             .setLngLat(selectedTract.geometry.coordinates[0][0])
@@ -558,7 +523,8 @@
 
         if (selectedTract) {
             const pctOwned30 = selectedTract.properties.pctOwned30;
-            const displayPctOwned30 = pctOwned30 === null || pctOwned30 === undefined ? 'No available data' : `${pctOwned30}% of homeowners in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.`;
+            const roundedPctOwned30 = Math.round(pctOwned30 * 10) / 10
+            const displayPctOwned30 = pctOwned30 === null || pctOwned30 === undefined ? 'No available data' : `${roundedPctOwned30}% of homeowners in ${selectedTract.properties.NAMELSAD} spend more than 30% of income on housing costs.`;
 
             new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
             .setLngLat(selectedTract.geometry.coordinates[0][0])
@@ -579,7 +545,8 @@
 
         if (selectedTract) {
             const pctChangeHH = selectedTract.properties.pctChangeHH;
-            const displayPctChangeHH = pctChangeHH === null || pctChangeHH === undefined ? 'No available data' : `${selectedTract.properties.NAMELSAD} saw a ${pctChangeHH}% change in the number of households (2010-2023).`;
+            const roundedPctChangeHH = Math.round(pctChangeHH * 10) / 10
+            const displayPctChangeHH = pctChangeHH === null || pctChangeHH === undefined ? 'No available data' : `${selectedTract.properties.NAMELSAD} saw a ${roundedPctChangeHH}% change in the number of households (2010-2023).`;
 
             new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
             .setLngLat(selectedTract.geometry.coordinates[0][0])
@@ -593,113 +560,40 @@
             .addTo(map);
     }});
 
+    const dropdown = document.getElementById('layer-dropdown');
 
-    //set default views for legends!
-        document.getElementById('pctHHLegend').style.visibility = 'hidden'
-        document.getElementById('cbRentersLegend').style.visibility = 'hidden'
-        document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
-        document.getElementById('medIncomeLegend').style.visibility = 'hidden'
+    dropdown.addEventListener('change', function() {
+        const selectedLayer = dropdown.value;
+        map.getStyle().layers.forEach(layer => {
+            if (layer.id !== selectedLayer) {
+            map.setLayoutProperty(layer.id, 'visibility', 'none');
+            }});
 
-    //turn on/off data display layers legends
-    document.querySelector('#medIncomeButton').addEventListener("click", () => {
-        const isVisible = map.getLayoutProperty("tracts-medIncome", "visibility") === "none"
-        if (isVisible)  {
-            map.setLayoutProperty("tracts-medIncome", "visibility", "visible")
-            map.setLayoutProperty("tracts-layer", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
-            document.getElementById('medIncomeLegend').style.visibility = 'visible'
-            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
-            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
-            document.getElementById('pctHHLegend').style.visibility = 'hidden'     
-        }   else    {
-            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("tracts-layer", "visibility", "visible")
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
-            document.getElementById('pctHHLegend').style.visibility = 'hidden'
-            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
-            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
-            document.getElementById('medIncomeLegend').style.visibility = 'hidden'   
-        }
+        map.setLayoutProperty(selectedLayer, 'visibility', 'visible');
+        map.setLayoutProperty(placeOfInterest+"-boundary", 'visibility', 'visible');
+        map.setLayoutProperty("road-label", 'visibility', 'visible');
+        map.setLayoutProperty("settlement-major-label", 'visibility', 'visible');
+        map.setLayoutProperty("settlement-subdivision-label", 'visibility', 'visible');
+        map.setLayoutProperty("settlement-minor-label", 'visibility', 'visible');
     });
 
-    document.querySelector('#pctCBRentersButton').addEventListener("click", () => {
-        const isVisible = map.getLayoutProperty("tracts-pctCostBurdenedRenters", "visibility") === "none"
-        if (isVisible)  {
-            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("tracts-layer", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "visible") 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
-            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
-            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
-            document.getElementById('cbRentersLegend').style.visibility = 'visible'
-            document.getElementById('pctHHLegend').style.visibility = 'hidden'           
-        }   else    {
-            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("tracts-layer", "visibility", "visible")
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
-            document.getElementById('pctHHLegend').style.visibility = 'hidden'
-            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
-            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
-            document.getElementById('medIncomeLegend').style.visibility = 'hidden'  
-        }
-    });
+    document.getElementById('layer-dropdown').addEventListener('change', function() {
+        var legends = document.querySelectorAll('.legend');
+        legends.forEach(function(legend) {
+        legend.style.display = 'none';
+            });
 
-    document.querySelector('#pctCBOwnersButton').addEventListener("click", () => {
-        const isVisible = map.getLayoutProperty("tracts-pctCostBurdenedOwners", "visibility") === "none"
-        if (isVisible)  {
-            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("tracts-layer", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "visible") 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
-            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
-            document.getElementById('cbOwnersLegend').style.visibility = 'visible'
-            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
-            document.getElementById('pctHHLegend').style.visibility = 'hidden' 
-        }   else    {
-            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("tracts-layer", "visibility", "visible")
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
-            document.getElementById('pctHHLegend').style.visibility = 'hidden'
-            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
-            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
-            document.getElementById('medIncomeLegend').style.visibility = 'hidden'   
-        }
-    });
+        var selectedLayer = dropdown.value;
+        if (selectedLayer === 'tracts-medIncome') {
+            document.getElementById('medIncomeLegend').style.display = 'block';
+        }   else if (selectedLayer === 'tracts-pctCostBurdenedRenters') {
+            document.getElementById('cbRentersLegend').style.display = 'block';
+        }   else if (selectedLayer === 'tracts-pctCostBurdenedOwners') {
+            document.getElementById('cbOwnersLegend').style.display = 'block';
+        }   else if (selectedLayer === 'tracts-pctHH') {
+            document.getElementById('pctHHLegend').style.display = 'block';
+        }});
 
-    document.querySelector('#pctHHButton').addEventListener("click", () => {
-        const isVisible = map.getLayoutProperty("tracts-pctHH", "visibility") === "none"
-        if (isVisible)  {
-            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("tracts-layer", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "visible")
-            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
-            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
-            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
-            document.getElementById('pctHHLegend').style.visibility = 'visible'         
-        }   else    {
-            map.setLayoutProperty("tracts-medIncome", "visibility", "none")
-            map.setLayoutProperty("tracts-layer", "visibility", "visible")
-            map.setLayoutProperty("tracts-pctCostBurdenedRenters", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctCostBurdenedOwners", "visibility", "none") 
-            map.setLayoutProperty("tracts-pctHH", "visibility", "none")
-            document.getElementById('pctHHLegend').style.visibility = 'hidden'
-            document.getElementById('cbRentersLegend').style.visibility = 'hidden'
-            document.getElementById('cbOwnersLegend').style.visibility = 'hidden'
-            document.getElementById('medIncomeLegend').style.visibility = 'hidden'
-        }
-    });
 
     let hoveredTractId = null
 

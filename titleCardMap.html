@@ -1,0 +1,168 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Upper Arlington Title Card</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link
+  href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
+  rel="stylesheet">
+
+<link 
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" 
+    rel="stylesheet">
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script> 
+    <script src="https://unpkg.com/@turf/turf@^7/turf.min.js"></script> 
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #map {
+            width: 100%;
+            flex-shrink: 1;
+            height: 100%;
+        }
+
+       .mapboxgl-popup {
+            width: 175px;
+            font: 12px/20px 'Roboto', sans-serif;
+            background-color: #425A70;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            display: block;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mapboxgl-popup .mapboxgl-popup-tip {
+            display: none;
+        }
+
+        .mapboxgl-popup-close-button {
+            top: 2px; 
+            right: 4px; 
+            width: 7px;
+            height: 7px;
+            color: #fff; 
+        }
+
+        .mapboxgl-popup-header {
+            margin: 0px;
+            font-size: 16px;
+            color: #fff;
+            font-weight: bold;
+            padding: 5px;
+        }
+    
+        .mapboxgl-popup-content {
+            font-size: 12px;
+            color: #425A70;
+            margin-left: 0px;
+            padding: 8px;
+            background-color: #fff;
+            line-height: 1.25;
+        }
+
+        #container  {
+           display: flex;
+           height: 100%;
+           width: 100%;
+           position: relative;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="map"></div>
+</div>
+
+<script>
+    const INITIAL_LOC = [-83.22, 40.04] 
+    const INITIAL_ZOOM = 10.9 
+    const communityScaleGray = "#425A70" 
+    const placeOfInterest = "Upper Arlington"
+ 
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZW10em90MDEiLCJhIjoiY20zZ2kyd3RpMDRnajJscHoyMG5neGJldyJ9.poXi4pgd2CoXKV2B4kg1Cw ';
+    const map = new mapboxgl.Map({
+        container: 'map', 
+        style: 'mapbox://styles/emtzot01/cm97xame8000o01qx6q1tfhz7', 
+        center: INITIAL_LOC, 
+        zoom: INITIAL_ZOOM 
+    });
+
+    map.on("load", () => {      
+        map.addSource("ohioPlaces", {    
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/main/ohioPlacesCensus2020.geojson"
+        })
+
+
+        map.addLayer({
+            id: "places-layer",  
+            type: "fill",
+            source: "ohioPlaces",
+            paint: {
+                "fill-color": "#d0cdcc",
+                "fill-opacity": 0.3,
+                "fill-outline-color": communityScaleGray 
+            },
+            "settlement-major-label", 
+            "settlement-subdivision-label", 
+            "settlement-minor-label");
+
+        map.addLayer({
+            id: "places-boundaries",
+            type: "line",
+            source: "ohioPlaces",
+            paint: {
+                "line-color": communityScaleGray,
+                "line-width": 1.2,
+                "line-opacity": 0.4
+                }
+            },
+            "settlement-major-label", 
+            "settlement-subdivision-label", 
+            "settlement-minor-label");
+        
+        map.addLayer({
+            id: "placeOfInterest-layer",
+            type: "fill",
+            source: "ohioPlaces",
+            paint: {
+                "fill-color": communityScaleGray,
+                "fill-opacity": 0.4
+                },
+            layout: {
+                visibility: "visible"
+                },
+            filter: ["==", "NAME", placeOfInterest]},
+            "settlement-major-label", 
+            "settlement-subdivision-label", 
+            "settlement-minor-label");
+    });
+
+    map.on("click", (e)=> {
+        const [ selectedPlace ]= map.queryRenderedFeatures(e.point, {
+            layers: ["places-layer"]
+        });
+
+        if (selectedPlace) {
+            new mapboxgl.Popup({closeButton: true}, {clickToClose: true})
+            .setLngLat(selectedPlace.geometry.coordinates[0][0]) 
+            .setHTML(`<div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedPlace.properties.NAME}</div>
+            </div>`)
+            .addTo(map)
+   }});
+        </script>
+    </body>
+</html>

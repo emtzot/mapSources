@@ -1,0 +1,208 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Muskogee Neighborhood Conditions</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link
+  href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
+  rel="stylesheet">
+
+<link 
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" 
+    rel="stylesheet">
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script> 
+    <script src="https://unpkg.com/@turf/turf@^7/turf.min.js"></script> 
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #map {
+            width: 100%;
+            flex-shrink: 1;
+            height: 100%;
+        }
+
+       .mapboxgl-popup {
+            width: 175px;
+            font: 12px/20px 'Roboto', sans-serif;
+            background-color: #425A70;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            display: block;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mapboxgl-popup .mapboxgl-popup-tip {
+            display: none;
+        }
+
+        .mapboxgl-popup-close-button {
+            top: 2px; 
+            right: 4px; 
+            width: 7px;
+            height: 7px;
+            color: #fff; 
+        }
+
+        .mapboxgl-popup-header {
+            margin: 0px;
+            font-size: 16px;
+            color: #fff;
+            font-weight: bold;
+            padding: 5px;
+        }
+    
+        .mapboxgl-popup-content {
+            font-size: 12px;
+            color: #425A70;
+            margin-left: 0px;
+            padding: 8px;
+            background-color: #fff;
+            line-height: 1.25;
+        }
+
+        #container  {
+           display: flex;
+           height: 100%;
+           width: 100%;
+           position: relative;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="map"></div>
+</div>
+
+<script>
+    const INITIAL_LOC = [-95.36, 35.70] //capture whole county
+    const INITIAL_ZOOM = 10 //set initial zoom (zoom levels 9-12 best for cities depending on size)
+    const communityScaleGray = "#425A70" //could replace with different accent color, I personally like this branding 
+    const placeOfInterest = "Muskogee"
+ 
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZW10em90MDEiLCJhIjoiY20zZ2kyd3RpMDRnajJscHoyMG5neGJldyJ9.poXi4pgd2CoXKV2B4kg1Cw ';
+    const map = new mapboxgl.Map({
+        container: 'map', 
+        style: 'mapbox://styles/emtzot01/cm6a8mjb5004g01qrd7cv07mq', 
+        center: INITIAL_LOC, 
+        zoom: INITIAL_ZOOM 
+    });
+
+    map.on("load", () => {      
+        map.addSource("muskogeeTracts", {    
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/refs/heads/main/muskogeeCounty_geojson.geojson",
+            promoteId: "GEOID"
+        })
+   
+        map.addSource("oklahomaPlaces", {    
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/refs/heads/main/okPlaces.geojson",
+            promoteId: "GEOID"
+        })
+
+        map.addLayer({
+            id: "tracts-class-layer",  
+            type: "fill",
+            source: "muskogeeTracts",
+            paint: {
+                "fill-color": {
+                    "type": "categorical",
+                    "property": "class",
+                    "stops": [
+                        ["DCQ", "#8FAB40"],
+                        ["DKU", "#CCE677"],
+                        ["DNI", "#EDFDC5"],
+                        ["OKCQ", "#8A8A8A"],
+                        ["OKKU", "#D1D0CD"],
+                        ["OKNI", "#F0EFEB"],
+                        ["HDCQ", "#333FA3"],
+                        ["HDKU", "#838AE3"],
+                        ["HDNI", "#D4D7FB"]
+                    ]},
+                "fill-outline-color": communityScaleGray,
+                "fill-opacity": ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.85,
+                    0.7]
+                }
+            },
+            "settlement-major-label", 
+            "settlement-subdivision-label", 
+            "settlement-minor-label");
+
+        
+        map.addLayer({
+            id: "placeOfInterest-layer",
+            type: "line",
+            source: "oklahomaPlaces",
+            paint: {
+                "line-color": communityScaleGray,
+                "line-opacity": 0.8,
+                "line-width": 2
+                },
+            layout: {
+                visibility: "visible"
+                },
+            filter: ["==", "label", placeOfInterest]},
+            "settlement-major-label", 
+             "settlement-subdivision-label", 
+            "settlement-minor-label");
+    });
+
+    let hoveredPlaceId = null
+
+    map.on('mousemove', 'tracts-class-layer', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredPlaceId !== null) {
+                    map.setFeatureState(
+                        { source: 'muskogeeTracts', id: hoveredPlaceId },
+                        { hover: false }
+                    );
+                }
+                hoveredPlaceId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'muskogeeTracts', id: hoveredPlaceId },
+                    { hover: true }
+                );
+            }
+        });
+
+
+        map.on('mouseleave', 'tracts-class-layer', () => {
+            if (hoveredPlaceId !== null) {
+                map.setFeatureState(
+                    { source: 'muskogeeTracts', id: hoveredPlaceId },
+                    { hover: false }
+                );
+            }
+            hoveredPlaceId = null;
+        });
+
+    map.on("click", (e)=> {
+        const [ selectedPlace ]= map.queryRenderedFeatures(e.point, {
+            layers: ["tracts-class-layer"]
+        });
+
+        if (selectedPlace) {
+            new mapboxgl.Popup({closeButton: true}, {clickToClose: true})
+            .setLngLat(selectedPlace.geometry.coordinates[0][0]) 
+            .setHTML(`<div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedPlace.properties.NAME}</div>
+            </div>`)
+            .addTo(map)
+   }});
+        </script>
+    </body>
+</html>

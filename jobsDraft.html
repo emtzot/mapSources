@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>2022 Jobs Heat Map Draft</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+    <link
+      href="https://api.tiles.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+        const INITIAL_LOC = [-78.6404167586031, 35.81283147768935] //Raleigh atm
+        const INITIAL_ZOOM = 8 //zoom level 4 would give a decent view of the country/contiguous states
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZW10em90MDEiLCJhIjoiY20zZ2kyd3RpMDRnajJscHoyMG5neGJldyJ9.poXi4pgd2CoXKV2B4kg1Cw ';
+        const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/emtzot01/cm6a8mjb5004g01qrd7cv07mq', //replace with personal style
+        center: INITIAL_LOC,
+        zoom: INITIAL_ZOOM
+      });
+
+      map.on('load', () => {
+        map.addSource('jobPoints', {
+            type: 'geojson',
+            data: "/Users/emtzot/Library/CloudStorage/GoogleDrive-emma@communityscale.io/Mon Drive/qgisProjects/cesJobs2022/Contiguous US Jobs 2022/jobsGeoJSON2022/jobs2022_correctProjection.geojson", //'https://raw.githubusercontent.com/emtzot/mapSources/main/ncTest2.geojson', 
+            promoteId: 'id'
+            });
+
+        map.addLayer({
+            id: 'jobs-heat',
+            type: 'heatmap',
+            source: 'jobPoints',
+            maxzoom: 15,
+            paint: {
+                // increase weight as totalJobs increases
+                'heatmap-weight': {
+                    property: 'totalJobs',
+                    type: 'exponential',
+                    stops: [
+                    [50, 0],
+                    [25000, 1]
+                    ]
+                },
+                // increase intensity as zoom level increases
+                'heatmap-intensity': {
+                    stops: [
+                    [11, 1],
+                    [15, 3]
+                    ]
+                },
+                // assign color values be applied to points depending on their density
+                'heatmap-color': [
+                    'interpolate',
+                    ['linear'],
+                    ['heatmap-density'],
+                    0.0,
+                    'rgba(236,222,239,0)',
+                    0.2,
+                    'rgb(208,209,230)',
+                    0.4,
+                    'rgb(166,189,219)',
+                    0.6,
+                    'rgb(103,169,207)',
+                    0.8,
+                    'rgb(28,144,153)'
+                ],
+                // increase radius as zoom increases
+                'heatmap-radius': {
+                    stops: [
+                    [11, 15],
+                    [15, 20]
+                    ]
+                },
+                // decrease opacity to transition into the circle layer
+                'heatmap-opacity': {
+                    default: 1,
+                    stops: [
+                    [14, 1],
+                    [15, 0]
+                    ]
+                }}},
+                "road-label", 
+                "settlement-major-label", 
+                "settlement-subdivision-label", 
+                "settlement-minor-label"
+            );
+
+        map.addLayer({
+            id: 'jobs-point',
+            type: 'circle',
+            source: 'jobPoints',
+            minzoom: 14,
+            paint: {
+      // increase the radius of the circle as the zoom level and dbh value increases
+                'circle-radius': {
+                property: 'totalJobs',
+                type: 'exponential',
+                stops: [
+                [{ zoom: 15, value: 250 }, 2],
+                [{ zoom: 15, value: 35000 }, 10],
+                [{ zoom: 22, value: 250 }, 10],
+                [{ zoom: 22, value: 35000 }, 50]
+            ]},
+                'circle-color': {
+                property: 'totalJobs',
+                type: 'exponential',
+                stops: [
+                    [250, 'rgba(236,222,239,0)'],
+                    [1000, 'rgb(236,222,239)'],
+                    [5000, 'rgb(208,209,230)'],
+                    [10000, 'rgb(166,189,219)'],
+                    [15000, 'rgb(103,169,207)'],
+                    [25000, 'rgb(28,144,153)'],
+                    [35000, 'rgb(1,108,89)']
+             ]},
+                'circle-stroke-color': 'white',
+                'circle-stroke-width': 1,
+                'circle-opacity': {
+                    stops: [
+                    [14, 0],
+                    [15, 1]
+                    ]}}},
+            "road-label", 
+            "settlement-major-label", 
+            "settlement-subdivision-label", 
+            "settlement-minor-label"
+);
+                //"road-label", 
+                //"settlement-major-label", 
+                //"settlement-subdivision-label", 
+                //"settlement-minor-label"
+            //)
+        // add circle layer here
+        });
+    </script>
+  </body>
+</html>
